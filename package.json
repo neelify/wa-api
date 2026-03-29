@@ -1,6 +1,6 @@
 {
   "name": "@neelify/wa-api",
-  "version": "1.7.2",
+  "version": "1.7.3",
   "description": "Multi Session Whatsapp Library",
   "main": "dist/index.js",
   "module": "dist/index.js",

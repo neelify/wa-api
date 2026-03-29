@@ -15,8 +15,10 @@
 ---
 
 <p align="center">
-  <img src="https://files.catbox.moe/63h8xn.jpeg" width="720" alt="Neele WA-API Header" />
+  <img src="https://files.catbox.moe/phppor.JPG" width="720" alt="Neele WA-API Header" />
 </p>
+
+<p align="center"><sub>2026 Glow-Up Edition - stable multi-session API - neelify namespace</sub></p>
 
 | 📦 Paket | 🎯 Baileys | ✨ Highlights |
 |----------|------------|----------------|
@@ -743,5 +745,13 @@ if (session) {
 **🌸 Made with Love & Glitter 🌸**
 
 [⬆️ Nach oben](#-neelifywa-api)
+
+</div>
+
+---
+
+<div align="center">
+
+Copyright 2026 neelify
 
 </div>
