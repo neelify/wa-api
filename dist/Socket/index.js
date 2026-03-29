@@ -49,7 +49,7 @@ const sessions = new Map();
 const callback = new Map();
 const retryCount = new Map();
 let stock;
-const CURRENT_WA_API_VERSION = "1.3.3";
+const CURRENT_WA_API_VERSION = "1.3.2";
 let waApiUpdateCheckDone = false;
 
 function isNewerVersion(latest, current) {
@@ -130,7 +130,7 @@ const startSession = (sessionId = "mysession", options = { printQR: true }) => _
             markOnlineOnConnect: false,
             browser: baileys_1.Browsers.ubuntu("Chrome"),
         });
-        sessions.set(sessionId, sock);
+        sessions.set(sessionId, Object.assign({}, sock));
         try {
                 
             sock.ev.process((events) => __awaiter(void 0, void 0, void 0, function* () {
@@ -216,11 +216,8 @@ const onimaii = (sessionId = "mysession", connect) => __awaiter(void 0, void 0, 
             })
             exports.onimaii = onimaii;
 exports.startSession = startSession;
-const startSessionWithPairingCode = (sessionId = "mysession", options = { phoneNumber: "" }, key) => __awaiter(void 0, void 0, void 0, function* () {
-   if (isSessionExistAndRunning(sessionId)) throw new Error_1.WhatsappError(Defaults_1.Messages.sessionAlreadyExist(sessionId));
-    if (!(options === null || options === void 0 ? void 0 : options.phoneNumber)) {
-        throw new Error_1.WhatsappError(Defaults_1.Messages.paremetersRequired("phoneNumber"));
-    }
+const startSessionWithPairingCode = (sessionId = "mysession", options = { phoneNumber },key) => __awaiter(void 0, void 0, void 0, function* () {
+   if (isSessionExistAndRunning(sessionId))throw new WhatsappError(Messages.sessionAlreadyExist(sessionId));
     const logger = (0, pino_1.default)({ level: "silent" });
             const { version } = yield (0, baileys_1.fetchLatestBaileysVersion)();
               const startSocket = () => __awaiter(void 0, void 0, void 0, function* () {
@@ -235,7 +232,7 @@ var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
               markOnlineOnConnect: false,
               browser: baileys_1.Browsers.ubuntu("Chrome"),
           });
-     sessions.set(sessionId, sock);
+     sessions.set(sessionId, { ...sock });
     try {
        if (!sock.authState.creds.registered) {
          console.log("first time pairing");
@@ -362,22 +359,22 @@ const getAllSessionData = () => {
 exports.getAllSessionData = getAllSessionData;
 
 async function loadSessionsFromStorage() {
-    const dirPath = path_1.default.resolve(Defaults_1.CREDENTIALS.DIR_NAME);
+    const dirPath = path.resolve(CREDENTIALS.DIR_NAME);
     const loadedSessions = [];
   
     // Ordner anlegen, falls nicht existiert
-    if (!fs_1.default.existsSync(dirPath)) {
-      fs_1.default.mkdirSync(dirPath, { recursive: true });
+    if (!fs.existsSync(dirPath)) {
+      fs.mkdirSync(dirPath, { recursive: true });
     }
   
     try {
-      const entries = await fs_1.default.promises.readdir(dirPath);
+      const entries = await fs.promises.readdir(dirPath);
   
       for (const entry of entries) {
-        const fullPath = path_1.default.join(dirPath, entry);
+        const fullPath = path.join(dirPath, entry);
         let stat;
         try {
-          stat = await fs_1.default.promises.stat(fullPath);
+          stat = await fs.promises.stat(fullPath);
         } catch {
           // Wenn sich die Datei zwischenzeitlich entfernt hat o.Ä., überspringen
           continue;
@@ -410,8 +407,12 @@ const onMessageReceived = (listener) => {
     callback.set(Defaults_1.CALLBACK_KEY.ON_MESSAGE_RECEIVED, listener);
 };
 
-const sock = (sessionId) => {
-    return (0, exports.getSession)(sessionId);
+const sock = (conn) => {
+    onMessageReceived(async(msg) =>{
+        let {sessionId}  = msg;
+let sock1 = getSesseion(sessionId)
+conn = sock1
+    })
   };
 exports.sock = sock;
 exports.onMessageReceived = onMessageReceived;
@@ -436,6 +437,6 @@ const onMessageUpdate = (listener) => {
 };
 exports.onMessageUpdate = onMessageUpdate;
 const onPairingCode = (listener) => {
-    callback.set(Defaults_1.CALLBACK_KEY.ON_PAIRING_CODE, listener);
+    callback.set(Defaults_1.CALLBACK_KEY.ON_MESSAGE_UPDATED, listener);
 };
 exports.onPairingCode = onPairingCode;

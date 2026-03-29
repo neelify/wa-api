@@ -198,10 +198,9 @@ class Whatsapp {
 }
 exports.Whatsapp = Whatsapp;
 const wa = new Whatsapp();
-if (require.main === module) {
-    const mySocket = new Socket_1.Socket({ id: "mysocket", phoneNumber: "6281524538841" });
-    mySocket.onPairing = (code) => {
-        console.log(code);
-    };
-    wa.startSession(mySocket);
-}
+// wa.load();
+const mySocket = new Socket_1.Socket({ id: "mysocket", phoneNumber: "6281524538841" });
+mySocket.onPairing = (code) => {
+    console.log(code);
+};
+wa.startSession(mySocket);

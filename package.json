@@ -1,7 +1,7 @@
 {
   "name": "@neelify/wa-api",
-  "version": "1.7.1",
-  "description": "Conservative multi-session WhatsApp wrapper for @neelify/baileys with QR and pairing support.",
+  "version": "1.7.2",
+  "description": "Multi Session Whatsapp Library",
   "main": "dist/index.js",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -22,40 +22,29 @@
     "url": "https://github.com/neelify/wa-api/issues"
   },
   "files": [
-    "dist/**/*",
-    "LICENSE",
-    "readme.md"
+    "dist/**/*"
   ],
   "scripts": {
-    "build": "node -e \"console.log('Packaged dist artifacts are already included.')\"",
-    "start": "node -e \"require('./dist/index.js'); console.log('wa-api loaded')\"",
-    "test": "node -e \"require('./dist/index.js'); console.log('wa-api smoke test passed')\"",
-    "run-script": "node -e \"require('./dist/index.js')\""
+    "build": "tsc",
+    "start": "tsc && node ./dist/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "run-script": "node ./dist/index.js"
   },
-  "keywords": [
-    "whatsapp",
-    "neelify",
-    "baileys",
-    "multi-session",
-    "qr",
-    "pairing"
-  ],
-  "author": "Neele",
+  "author": {
+    "name": "Neelify"
+  },
   "license": "ISC",
   "dependencies": {
     "jest": "^29.0.0",
     "@adiwajshing/keyed-db": "^0.2.4",
     "@hapi/boom": "^10.0.1",
-    "@neelify/baileys": "^2.2.0",
+    "@neelify/baileys": "^2.0.0",
     "mime": "^3.0.0",
     "pino": "^8.11.0",
     "qrcode-terminal": "^0.12.0"
   },
   "devDependencies": {
     "@types/mime": "^3.0.1"
-  },
-  "engines": {
-    "node": ">=16.0.0"
   },
   "publishConfig": {
     "access": "public"

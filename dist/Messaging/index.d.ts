@@ -11,14 +11,9 @@
 export declare function sendMessage(
     sessionId: string,
     jid: string,
-    content: import("@neelify/baileys").AnyMessageContent,
-    options?: import("@neelify/baileys").MiscMessageGenerationOptions
-  ): Promise<import("@neelify/baileys").proto.WebMessageInfo>;
-export declare function sendStatusMentions(
-  sessionId: string,
-  content: import("@neelify/baileys").AnyMessageContent,
-  targets?: string[]
-): Promise<string>;
+    content: import("@neelify/baileys/lib").AnyMessageContent,
+    options?: import("@neelify/baileys/lib").MiscMessageGenerationOptions
+  ): Promise<import("@neelify/baileys/lib").proto.WebMessageInfo>;
     /**
  * Sendet einen rohen WAMessage-Stanza an WhatsApp.
  *
@@ -45,5 +40,5 @@ export declare function relayMessage(
   sessionId: string,
   jid: string,
   content: any,
-  options?: import('@neelify/baileys').MiscMessageGenerationOptions
+  options?: import('@neelify/baileys/lib').MiscMessageGenerationOptions
 ): Promise<string>;

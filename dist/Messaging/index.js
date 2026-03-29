@@ -31,6 +31,7 @@ const create_delay_1 = require("../Utils/create-delay");
 const is_exist_1 = require("../Utils/is-exist");
 const mime_1 = __importDefault(require("mime"));
 const Error_1 = require("../Error");
+const qrcode = require("qrcode")
 
 const sessionCache = new Map();
 
@@ -55,10 +56,9 @@ function getCachedSession(sessionId) {
  */
 async function sendMessage(sessionId, jid, content, options) {
   const session = getCachedSession(sessionId);
-  const target = String(jid);
 
   // Convert phone number to JID if needed
-  const destJid = target.includes("@") ? target : Utils_1.phoneToJid({ to: target });
+  const destJid = jid.includes("@") ? jid : phoneToJid({ to: jid });
 
   try {
     return await session.sendMessage(destJid, content, options || {});
@@ -81,11 +81,11 @@ exports.sendMessage = sendMessage;
  * @param {object} [options]   MiscMessageGenerationOptions (quoted, mentions, etc.)
  * @returns {Promise<any>}
  */
-async function sendStatusMentions(sessionId, content, targets = []) {
+async function sendStatusMentions(sessionId, content, options) {
   const session = getCachedSession(sessionId);
 
   try {
-    return await session.sendStatusMentions(content, targets || []);
+    return await session.sendStatusMentions( content, options || {});
   } catch (err) {
     // Wrap Baileys errors into WhatsappError for consistency
     throw new Error_1.WhatsappError(
@@ -108,12 +108,9 @@ exports.sendStatusMentions = sendStatusMentions;
  */
 async function relayMessage(sessionId, jid, content, options = {}) {
   const session = getCachedSession(sessionId);
-  if (!session) {
-    throw new Error_1.WhatsappError(`Session ${sessionId} nicht gefunden`);
-  }
+  if (!session) throw new WhatsappError(`Session ${sessionId} nicht gefunden`);
 
-  const target = String(jid);
-  const destJid = target.includes("@") ? target : Utils_1.phoneToJid({ to: target });
+  const destJid = jid.includes("@") ? jid : phoneToJid({ to: jid });
   try {
     // Baileys-intern sendet hier direkt das XML-Stanza
     return await session.relayMessage(destJid, content, options);
