@@ -49,7 +49,17 @@ const sessions = new Map();
 const callback = new Map();
 const retryCount = new Map();
 let stock;
-const CURRENT_WA_API_VERSION = "1.3.2";
+const readCurrentWaApiVersion = () => {
+    var _a, _b;
+    try {
+        const pkg = require("../../package.json");
+        return ((_b = (_a = pkg === null || pkg === void 0 ? void 0 : pkg.version) === null || _a === void 0 ? void 0 : _a.trim()) !== null && _b !== void 0 ? _b : "") || "0.0.0";
+    }
+    catch (_c) {
+        return process.env.npm_package_version || "0.0.0";
+    }
+};
+const CURRENT_WA_API_VERSION = readCurrentWaApiVersion();
 let waApiUpdateCheckDone = false;
 
 function isNewerVersion(latest, current) {
@@ -65,51 +75,78 @@ function isNewerVersion(latest, current) {
 }
 
 // Liest von der offiziellen npm-Registry (registry.npmjs.org), ob ein Update existiert – nur 1x pro Prozess
+const requestJson = (url, options = {}) => {
+    var _a;
+    return new Promise((resolve, reject) => {
+        const req = https_1.default.get(url, {
+            timeout: Number(options.timeoutMs) > 0 ? Number(options.timeoutMs) : 5000,
+            headers: Object.assign({ "User-Agent": "@neelify/wa-api update-check", "Accept": "application/json" }, ((_a = options.headers) !== null && _a !== void 0 ? _a : {}))
+        }, (res) => {
+            let data = "";
+            res.on("data", (chunk) => {
+                data += chunk;
+            });
+            res.on("end", () => {
+                try {
+                    resolve(JSON.parse(data));
+                }
+                catch (error) {
+                    reject(error);
+                }
+            });
+        });
+        req.on("error", reject);
+        req.on("timeout", () => {
+            req.destroy(new Error("update-check-timeout"));
+        });
+    });
+};
+const fetchLatestWaApiVersion = () => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c, _d;
+    try {
+        const npmInfo = yield requestJson("https://registry.npmjs.org/@neelify/wa-api/latest", { timeoutMs: 5000 });
+        const latestFromNpm = ((_b = (_a = npmInfo === null || npmInfo === void 0 ? void 0 : npmInfo.version) === null || _a === void 0 ? void 0 : _a.trim()) !== null && _b !== void 0 ? _b : "") || null;
+        if (latestFromNpm) {
+            return latestFromNpm;
+        }
+    }
+    catch (_e) { }
+    try {
+        const ghInfo = yield requestJson("https://api.github.com/repos/neelify/wa-api/releases/latest", {
+            timeoutMs: 6000,
+            headers: { "Accept": "application/vnd.github+json" }
+        });
+        const latestFromGithub = ((_d = (_c = ghInfo === null || ghInfo === void 0 ? void 0 : ghInfo.tag_name) === null || _c === void 0 ? void 0 : _c.trim()) !== null && _d !== void 0 ? _d : "")
+            .replace(/^v/i, "") || null;
+        if (latestFromGithub) {
+            return latestFromGithub;
+        }
+    }
+    catch (_f) { }
+    return null;
+});
 const checkWaApiUpdate = () => {
     if (waApiUpdateCheckDone) {
         return Promise.resolve(null);
     }
     waApiUpdateCheckDone = true;
-    return new Promise((resolve) => {
-        const url = `https://registry.npmjs.org/@neelify/wa-api/latest`;
-        https_1.default.get(url, { timeout: 5000 }, (res) => {
-            let data = '';
-            res.on('data', (chunk) => {
-                data += chunk;
-            });
-            res.on('end', () => {
-                try {
-                    const packageInfo = JSON.parse(data);
-                    const latestVersion = packageInfo.version;
-                    if (latestVersion && isNewerVersion(latestVersion, CURRENT_WA_API_VERSION)) {
-                        const updateMessage = `\n╔════════════════════════════════════════╗\n║  🔔 NEUES UPDATE VERFÜGBAR! 🔔        ║\n╠════════════════════════════════════════╣\n║  @neelify/wa-api                    ║\n║  Aktuelle Version: ${(CURRENT_WA_API_VERSION || '').padEnd(20)} ║\n║  Neue Version:     ${(latestVersion || '').padEnd(20)} ║\n║                                        ║\n║  Bitte aktualisiere:                  ║\n║  npm install @neelify/wa-api@latest ║\n╚════════════════════════════════════════╝\n`;
-                        console.log(updateMessage);
-                        resolve({
-                            current: CURRENT_WA_API_VERSION,
-                            latest: latestVersion,
-                            hasUpdate: true
-                        });
-                    }
-                    else {
-                        const currentVersionMessage = `\n╔════════════════════════════════════════╗\n║  ✅ Du nutzt die aktuelle Version      ║\n║     von @neelify/wa-api              ║\n╚════════════════════════════════════════╝\n`;
-                        console.log(currentVersionMessage);
-                        resolve({
-                            current: CURRENT_WA_API_VERSION,
-                            latest: latestVersion || CURRENT_WA_API_VERSION,
-                            hasUpdate: false
-                        });
-                    }
-                }
-                catch (error) {
-                    resolve(null);
-                }
-            });
-        }).on('error', () => {
-            resolve(null);
-        }).on('timeout', () => {
-            resolve(null);
-        });
-    });
+    return fetchLatestWaApiVersion()
+        .then((latestVersion) => {
+        if (latestVersion && isNewerVersion(latestVersion, CURRENT_WA_API_VERSION)) {
+            console.log(`[wa-api] Update available: ${CURRENT_WA_API_VERSION} -> ${latestVersion} (npm install @neelify/wa-api@latest)`);
+            return {
+                current: CURRENT_WA_API_VERSION,
+                latest: latestVersion,
+                hasUpdate: true
+            };
+        }
+        return {
+            current: CURRENT_WA_API_VERSION,
+            latest: latestVersion || CURRENT_WA_API_VERSION,
+            hasUpdate: false
+        };
+    })
+        .catch(() => null);
 };
 const startSession = (sessionId = "mysession", options = { printQR: true }) => __awaiter(void 0, void 0, void 0, function* () {
     // Prüfe auf Updates beim Start
