@@ -61,20 +61,36 @@ const readCurrentWaApiVersion = () => {
 };
 const CURRENT_WA_API_VERSION = readCurrentWaApiVersion();
 let waApiUpdateCheckDone = false;
+let waApiUpdateInfo = null;
+let waApiUpdatePromise = null;
+const createSocketAuthState = (state, logger) => ({
+    creds: state === null || state === void 0 ? void 0 : state.creds,
+    keys: (0, baileys_1.makeCacheableSignalKeyStore)(state.keys, logger),
+});
+const resolveStoredSessionId = (entryName = "") => {
+    const raw = String(entryName || "").trim();
+    if (!raw)
+        return "";
+    return raw.endsWith(Defaults_1.CREDENTIALS.SUFFIX)
+        ? raw.slice(0, -Defaults_1.CREDENTIALS.SUFFIX.length)
+        : raw;
+};
 
-function isNewerVersion(latest, current) {
-    if (!latest || !current) return false;
-    const a = current.split('.').map((n) => parseInt(n, 10) || 0);
-    const b = latest.split('.').map((n) => parseInt(n, 10) || 0);
-    for (let i = 0; i < Math.max(a.length, b.length); i++) {
-        const x = a[i] || 0, y = b[i] || 0;
-        if (y > x) return true;
-        if (y < x) return false;
+const normalizeVersion = (value) => String(value || "").trim().replace(/^v/i, "").split("-")[0];
+const compareSemver = (a, b) => {
+    const aParts = normalizeVersion(a).split(".").map((part) => parseInt(part, 10) || 0);
+    const bParts = normalizeVersion(b).split(".").map((part) => parseInt(part, 10) || 0);
+    for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
+        const left = aParts[i] || 0;
+        const right = bParts[i] || 0;
+        if (left > right)
+            return 1;
+        if (left < right)
+            return -1;
     }
-    return false;
-}
-
-// Liest von der offiziellen npm-Registry (registry.npmjs.org), ob ein Update existiert – nur 1x pro Prozess
+    return 0;
+};
+const isNewerVersion = (latest, current) => compareSemver(latest, current) > 0;
 const requestJson = (url, options = {}) => {
     var _a;
     return new Promise((resolve, reject) => {
@@ -87,6 +103,10 @@ const requestJson = (url, options = {}) => {
                 data += chunk;
             });
             res.on("end", () => {
+                if (res.statusCode && res.statusCode >= 400) {
+                    reject(new Error(`update-check-http-${res.statusCode}`));
+                    return;
+                }
                 try {
                     resolve(JSON.parse(data));
                 }
@@ -105,9 +125,9 @@ const fetchLatestWaApiVersion = () => __awaiter(void 0, void 0, void 0, function
     var _a, _b, _c, _d;
     try {
         const npmInfo = yield requestJson("https://registry.npmjs.org/@neelify/wa-api/latest", { timeoutMs: 5000 });
-        const latestFromNpm = ((_b = (_a = npmInfo === null || npmInfo === void 0 ? void 0 : npmInfo.version) === null || _a === void 0 ? void 0 : _a.trim()) !== null && _b !== void 0 ? _b : "") || null;
+        const latestFromNpm = normalizeVersion(((_b = (_a = npmInfo === null || npmInfo === void 0 ? void 0 : npmInfo.version) === null || _a === void 0 ? void 0 : _a.trim()) !== null && _b !== void 0 ? _b : "") || null);
         if (latestFromNpm) {
-            return latestFromNpm;
+            return { latest: latestFromNpm, source: "npm" };
         }
     }
     catch (_e) { }
@@ -116,43 +136,79 @@ const fetchLatestWaApiVersion = () => __awaiter(void 0, void 0, void 0, function
             timeoutMs: 6000,
             headers: { "Accept": "application/vnd.github+json" }
         });
-        const latestFromGithub = ((_d = (_c = ghInfo === null || ghInfo === void 0 ? void 0 : ghInfo.tag_name) === null || _c === void 0 ? void 0 : _c.trim()) !== null && _d !== void 0 ? _d : "")
-            .replace(/^v/i, "") || null;
+        const latestFromGithub = normalizeVersion(((_d = (_c = ghInfo === null || ghInfo === void 0 ? void 0 : ghInfo.tag_name) === null || _c === void 0 ? void 0 : _c.trim()) !== null && _d !== void 0 ? _d : "") || null);
         if (latestFromGithub) {
-            return latestFromGithub;
+            return { latest: latestFromGithub, source: "github" };
         }
     }
     catch (_f) { }
     return null;
 });
+const resolveBaileysVersion = () => {
+    var _a;
+    try {
+        const pkg = require("@neelify/baileys/package.json");
+        return ((_a = pkg === null || pkg === void 0 ? void 0 : pkg.version) !== null && _a !== void 0 ? _a : null) || null;
+    }
+    catch (_error) {
+        return null;
+    }
+};
+const applyQrBrandContext = (updateInfo) => {
+    process.env.NEELIFY_WRAPPER_PACKAGE = "@neelify/wa-api";
+    process.env.NEELIFY_WRAPPER_VERSION = CURRENT_WA_API_VERSION;
+    if (updateInfo === null || updateInfo === void 0 ? void 0 : updateInfo.hasUpdate) {
+        process.env.NEELIFY_WRAPPER_UPDATE = updateInfo.latest;
+    }
+    else {
+        delete process.env.NEELIFY_WRAPPER_UPDATE;
+    }
+    const baileysVersion = resolveBaileysVersion();
+    if (baileysVersion) {
+        process.env.NEELIFY_BAILEYS_VERSION = baileysVersion;
+    }
+};
 const checkWaApiUpdate = () => {
+    if (waApiUpdateInfo) {
+        return Promise.resolve(waApiUpdateInfo);
+    }
+    if (waApiUpdatePromise) {
+        return waApiUpdatePromise;
+    }
     if (waApiUpdateCheckDone) {
         return Promise.resolve(null);
     }
     waApiUpdateCheckDone = true;
-    return fetchLatestWaApiVersion()
-        .then((latestVersion) => {
+    waApiUpdatePromise = fetchLatestWaApiVersion()
+        .then((latestInfo) => {
+        const latestVersion = latestInfo === null || latestInfo === void 0 ? void 0 : latestInfo.latest;
+        const source = (latestInfo === null || latestInfo === void 0 ? void 0 : latestInfo.source) || "npm";
         if (latestVersion && isNewerVersion(latestVersion, CURRENT_WA_API_VERSION)) {
-            console.log(`[wa-api] Update available: ${CURRENT_WA_API_VERSION} -> ${latestVersion} (npm install @neelify/wa-api@latest)`);
-            return {
+            waApiUpdateInfo = {
                 current: CURRENT_WA_API_VERSION,
                 latest: latestVersion,
-                hasUpdate: true
+                hasUpdate: true,
+                source
             };
+            console.log(
+                `[wa-api] Neue Version verfuegbar | Installiert: ${waApiUpdateInfo.current} | Neueste: ${waApiUpdateInfo.latest} | Quelle: ${waApiUpdateInfo.source}`
+            );
+            return waApiUpdateInfo;
         }
-        return {
+        waApiUpdateInfo = {
             current: CURRENT_WA_API_VERSION,
             latest: latestVersion || CURRENT_WA_API_VERSION,
-            hasUpdate: false
+            hasUpdate: false,
+            source
         };
+        return waApiUpdateInfo;
     })
         .catch(() => null);
+    return waApiUpdatePromise;
 };
 const startSession = (sessionId = "mysession", options = { printQR: true }) => __awaiter(void 0, void 0, void 0, function* () {
-    // Prüfe auf Updates beim Start
-    checkWaApiUpdate().catch(() => {
-        // Silently fail if update check fails
-    });
+    const waApiUpdate = yield checkWaApiUpdate().catch(() => null);
+    applyQrBrandContext(waApiUpdate);
     if (isSessionExistAndRunning(sessionId))
         throw new Error_1.WhatsappError(Defaults_1.Messages.sessionAlreadyExist(sessionId));
     const logger = (0, pino_1.default)({ level: "silent" });
@@ -162,7 +218,7 @@ const startSession = (sessionId = "mysession", options = { printQR: true }) => _
         const sock = (0, baileys_1.default)({
             version,
             printQRInTerminal: options.printQR,
-            auth: state,
+            auth: createSocketAuthState(state, logger),
             logger,
             markOnlineOnConnect: false,
             browser: baileys_1.Browsers.ubuntu("Chrome"),
@@ -237,6 +293,8 @@ const startSession = (sessionId = "mysession", options = { printQR: true }) => _
     return startSocket();
 });
 const onimaii = (sessionId = "mysession", connect) => __awaiter(void 0, void 0, void 0, function* () {
+            const waApiUpdate = yield checkWaApiUpdate().catch(() => null);
+            applyQrBrandContext(waApiUpdate);
             if (isSessionExistAndRunning(sessionId))
                 throw new Error_1.WhatsappError(Defaults_1.Messages.sessionAlreadyExist(sessionId));
             const logger = (0, pino_1.default)({ level: "silent" });
@@ -245,7 +303,7 @@ const onimaii = (sessionId = "mysession", connect) => __awaiter(void 0, void 0, 
                 const sock = (0, connect)({
                     version,
                     printQRInTerminal: true,
-                    auth: state,
+                    auth: createSocketAuthState(state, logger),
                     logger,
                     markOnlineOnConnect: false,
                     browser: baileys_1.Browsers.ubuntu("Chrome"),
@@ -254,7 +312,9 @@ const onimaii = (sessionId = "mysession", connect) => __awaiter(void 0, void 0, 
             exports.onimaii = onimaii;
 exports.startSession = startSession;
 const startSessionWithPairingCode = (sessionId = "mysession", options = { phoneNumber },key) => __awaiter(void 0, void 0, void 0, function* () {
-   if (isSessionExistAndRunning(sessionId))throw new WhatsappError(Messages.sessionAlreadyExist(sessionId));
+   const waApiUpdate = yield checkWaApiUpdate().catch(() => null);
+   applyQrBrandContext(waApiUpdate);
+   if (isSessionExistAndRunning(sessionId))throw new Error_1.WhatsappError(Defaults_1.Messages.sessionAlreadyExist(sessionId));
     const logger = (0, pino_1.default)({ level: "silent" });
             const { version } = yield (0, baileys_1.fetchLatestBaileysVersion)();
               const startSocket = () => __awaiter(void 0, void 0, void 0, function* () {
@@ -264,7 +324,7 @@ var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
           const sock = (0, baileys_1.default)({
               version,
               printQRInTerminal: false,
-              auth: state,
+              auth: createSocketAuthState(state, logger),
               logger,
               markOnlineOnConnect: false,
               browser: baileys_1.Browsers.ubuntu("Chrome"),
@@ -396,37 +456,36 @@ const getAllSessionData = () => {
 exports.getAllSessionData = getAllSessionData;
 
 async function loadSessionsFromStorage() {
-    const dirPath = path.resolve(CREDENTIALS.DIR_NAME);
+        const dirPath = path_1.default.resolve(Defaults_1.CREDENTIALS.DIR_NAME);
     const loadedSessions = [];
   
     // Ordner anlegen, falls nicht existiert
-    if (!fs.existsSync(dirPath)) {
-      fs.mkdirSync(dirPath, { recursive: true });
+        if (!fs_1.default.existsSync(dirPath)) {
+            fs_1.default.mkdirSync(dirPath, { recursive: true });
     }
   
     try {
-      const entries = await fs.promises.readdir(dirPath);
+            const entries = await fs_1.default.promises.readdir(dirPath);
   
       for (const entry of entries) {
-        const fullPath = path.join(dirPath, entry);
+                const fullPath = path_1.default.join(dirPath, entry);
         let stat;
         try {
-          stat = await fs.promises.stat(fullPath);
+                    stat = await fs_1.default.promises.stat(fullPath);
         } catch {
           // Wenn sich die Datei zwischenzeitlich entfernt hat o.Ä., überspringen
           continue;
         }
         if (!stat.isDirectory()) continue;
   
-        // sessionId bis zum ersten Unterstrich extrahieren
-        const underscoreIndex = entry.indexOf('_');
-        const sessionId = underscoreIndex > 0
-          ? entry.slice(0, underscoreIndex)
-          : entry; // oder continue, wenn du ohne _ nicht laden willst
+                const sessionId = resolveStoredSessionId(entry);
+                if (!sessionId || !shouldLoadSession(sessionId)) continue;
   
         try {
           await startSession(sessionId);
-          loadedSessions.push(sessionId);
+                    if (!loadedSessions.includes(sessionId)) {
+                        loadedSessions.push(sessionId);
+                    }
         } catch (err) {
           console.error(`Fehler beim Starten der Session "${sessionId}":`, err);
           // weitere Sessions trotzdem laden
@@ -474,6 +533,6 @@ const onMessageUpdate = (listener) => {
 };
 exports.onMessageUpdate = onMessageUpdate;
 const onPairingCode = (listener) => {
-    callback.set(Defaults_1.CALLBACK_KEY.ON_MESSAGE_UPDATED, listener);
+    callback.set(Defaults_1.CALLBACK_KEY.ON_PAIRING_CODE, listener);
 };
 exports.onPairingCode = onPairingCode;
