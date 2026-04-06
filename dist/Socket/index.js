@@ -168,6 +168,259 @@ const applyQrBrandContext = (updateInfo) => {
         process.env.NEELIFY_BAILEYS_VERSION = baileysVersion;
     }
 };
+const pushInteractiveFallbackLine = (lines, value) => {
+    const normalized = String(value || "").trim();
+    if (normalized) {
+        lines.push(normalized);
+    }
+};
+const collectInteractiveFallbackButtons = (buttons = [], bucket = []) => {
+    for (const button of Array.isArray(buttons) ? buttons : []) {
+        if (!(button === null || button === void 0 ? void 0 : button.buttonParamsJson)) {
+            continue;
+        }
+        let parsed = null;
+        try {
+            parsed = JSON.parse(button.buttonParamsJson);
+        }
+        catch (_a) {
+            parsed = null;
+        }
+        if (!parsed || typeof parsed !== "object") {
+            continue;
+        }
+        if (button.name === "quick_reply") {
+            const text = String(parsed.display_text || parsed.title || parsed.id || "Option").trim();
+            const command = String(parsed.id || parsed.command || "").trim();
+            if (text) {
+                bucket.push({ text, command });
+            }
+            continue;
+        }
+        if (button.name === "cta_url") {
+            const text = String(parsed.display_text || parsed.title || "Link").trim();
+            const url = String(parsed.url || parsed.cta_url || "").trim();
+            if (text) {
+                bucket.push({ text, url });
+            }
+            continue;
+        }
+        if (button.name === "single_select") {
+            for (const section of Array.isArray(parsed.sections) ? parsed.sections : []) {
+                for (const row of Array.isArray(section === null || section === void 0 ? void 0 : section.rows) ? section.rows : []) {
+                    const text = String((row === null || row === void 0 ? void 0 : row.title) || (row === null || row === void 0 ? void 0 : row.display_text) || (row === null || row === void 0 ? void 0 : row.text) || (row === null || row === void 0 ? void 0 : row.description) || "Auswahl").trim();
+                    const command = String((row === null || row === void 0 ? void 0 : row.id) || (row === null || row === void 0 ? void 0 : row.rowId) || (row === null || row === void 0 ? void 0 : row.selectedRowId) || "").trim();
+                    if (text) {
+                        bucket.push({ text, command });
+                    }
+                }
+            }
+            continue;
+        }
+        const text = String(parsed.display_text || parsed.title || parsed.text || "").trim();
+        const command = String(parsed.id || parsed.command || "").trim();
+        const url = String(parsed.url || "").trim();
+        if (text) {
+            bucket.push({ text, command, url });
+        }
+    }
+    return bucket;
+};
+const extractInteractiveFallbackButtons = (interactiveMessage = {}) => {
+    const bucket = [];
+    if (!interactiveMessage || typeof interactiveMessage !== "object") {
+        return bucket;
+    }
+    collectInteractiveFallbackButtons(interactiveMessage === null || interactiveMessage === void 0 ? void 0 : interactiveMessage.nativeFlowMessage?.buttons, bucket);
+    for (const card of Array.isArray(interactiveMessage === null || interactiveMessage === void 0 ? void 0 : interactiveMessage.carouselMessage?.cards)
+        ? interactiveMessage.carouselMessage.cards
+        : []) {
+        collectInteractiveFallbackButtons(card === null || card === void 0 ? void 0 : card.nativeFlowMessage?.buttons, bucket);
+    }
+    return bucket.slice(0, 24);
+};
+const renderInteractiveMessageFallback = (interactiveMessage = {}) => {
+    if (!interactiveMessage || typeof interactiveMessage !== "object") {
+        return "";
+    }
+    const lines = [];
+    pushInteractiveFallbackLine(lines, interactiveMessage === null || interactiveMessage === void 0 ? void 0 : interactiveMessage.header?.title);
+    pushInteractiveFallbackLine(lines, interactiveMessage === null || interactiveMessage === void 0 ? void 0 : interactiveMessage.body?.text);
+    const cardLines = [];
+    for (const card of Array.isArray(interactiveMessage === null || interactiveMessage === void 0 ? void 0 : interactiveMessage.carouselMessage?.cards)
+        ? interactiveMessage.carouselMessage.cards
+        : []) {
+        const cardTitle = String((card === null || card === void 0 ? void 0 : card.header?.title) || "").trim();
+        const cardBody = String((card === null || card === void 0 ? void 0 : card.body?.text) || "").trim();
+        const merged = [cardTitle, cardBody].filter(Boolean).join(" - ");
+        if (merged) {
+            cardLines.push(`- ${merged}`);
+        }
+    }
+    if (cardLines.length) {
+        lines.push(["Karten:", ...cardLines].join("\n"));
+    }
+    const buttons = extractInteractiveFallbackButtons(interactiveMessage);
+    if (buttons.length) {
+        lines.push([
+            "Optionen:",
+            ...buttons.map((button) => {
+                if (button.command) {
+                    return `- ${button.text} -> ${button.command}`;
+                }
+                if (button.url) {
+                    return `- ${button.text} -> ${button.url}`;
+                }
+                return `- ${button.text}`;
+            })
+        ].join("\n"));
+    }
+    pushInteractiveFallbackLine(lines, interactiveMessage === null || interactiveMessage === void 0 ? void 0 : interactiveMessage.footer?.text);
+    return lines.filter(Boolean).join("\n\n").trim();
+};
+const extractInteractiveMessageFromContent = (content = {}) => {
+    var _a, _b, _c, _d;
+    if (!content || typeof content !== "object") {
+        return null;
+    }
+    if (content.interactiveMessage && typeof content.interactiveMessage === "object") {
+        return content.interactiveMessage;
+    }
+    const viewOnceMessage = (_b = (_a = content.viewOnceMessage) === null || _a === void 0 ? void 0 : _a.message) !== null && _b !== void 0 ? _b : null;
+    if ((viewOnceMessage === null || viewOnceMessage === void 0 ? void 0 : viewOnceMessage.interactiveMessage) && typeof viewOnceMessage.interactiveMessage === "object") {
+        return viewOnceMessage.interactiveMessage;
+    }
+    const viewOnceExtension = (_d = (_c = content.viewOnceMessageV2Extension) === null || _c === void 0 ? void 0 : _c.message) !== null && _d !== void 0 ? _d : null;
+    if ((viewOnceExtension === null || viewOnceExtension === void 0 ? void 0 : viewOnceExtension.interactiveMessage) && typeof viewOnceExtension.interactiveMessage === "object") {
+        return viewOnceExtension.interactiveMessage;
+    }
+    return null;
+};
+const isInteractiveFallbackDisabled = () => {
+    const raw = String(process.env.NEELIFY_WA_API_INTERACTIVE_FALLBACK || "").trim().toLowerCase();
+    return raw === "0" || raw === "false" || raw === "off" || raw === "no" || raw === "disable" || raw === "disabled";
+};
+const buildFallbackSendOptions = (options = {}) => {
+    if (!options || typeof options !== "object") {
+        return {};
+    }
+    const next = Object.assign({}, options);
+    delete next.messageId;
+    delete next.additionalAttributes;
+    delete next.additionalNodes;
+    delete next.participant;
+    return next;
+};
+const patchSocketForInteractiveFallback = (sock, sessionId = "") => {
+    if (!sock || typeof sock !== "object" || sock.__neelifyInteractiveFallbackPatched) {
+        return sock;
+    }
+    const originalSendMessage = typeof sock.sendMessage === "function" ? sock.sendMessage.bind(sock) : null;
+    const originalRelayMessage = typeof sock.relayMessage === "function" ? sock.relayMessage.bind(sock) : null;
+    if (!originalSendMessage) {
+        return sock;
+    }
+    const sendFallbackText = async (jid, interactiveMessage, options = {}) => {
+        const fallbackText = renderInteractiveMessageFallback(interactiveMessage);
+        if (!fallbackText) {
+            return null;
+        }
+        return originalSendMessage(jid, { text: fallbackText }, buildFallbackSendOptions(options));
+    };
+    sock.sendMessage = async (jid, content, options = {}) => {
+        const interactiveMessage = isInteractiveFallbackDisabled() ? null : extractInteractiveMessageFromContent(content);
+        if (interactiveMessage) {
+            const sent = await sendFallbackText(jid, interactiveMessage, options);
+            if (sent) {
+                return sent;
+            }
+        }
+        return originalSendMessage(jid, content, options);
+    };
+    if (originalRelayMessage) {
+        sock.relayMessage = async (jid, content, options = {}) => {
+            const interactiveMessage = isInteractiveFallbackDisabled() ? null : extractInteractiveMessageFromContent(content);
+            if (interactiveMessage) {
+                const sent = await sendFallbackText(jid, interactiveMessage, options);
+                if (sent) {
+                    return (sent === null || sent === void 0 ? void 0 : sent.key?.id) || (sent === null || sent === void 0 ? void 0 : sent.id) || (options === null || options === void 0 ? void 0 : options.messageId) || null;
+                }
+            }
+            return originalRelayMessage(jid, content, options);
+        };
+    }
+    Object.defineProperty(sock, "__neelifyInteractiveFallbackPatched", {
+        value: sessionId || true,
+        enumerable: false,
+        configurable: true,
+    });
+    return sock;
+};
+const attachSocketMessageHelpers = (msg, sessionId = "") => {
+    if (!msg || typeof msg !== "object") {
+        return msg;
+    }
+    msg.sessionId = sessionId;
+    msg.saveImage = (path) => (0, save_media_1.saveImageHandler)(msg, path);
+    msg.saveVideo = (path) => (0, save_media_1.saveVideoHandler)(msg, path);
+    msg.saveDocument = (path) => (0, save_media_1.saveDocumentHandler)(msg, path);
+    return msg;
+};
+const WA_API_MESSAGE_UPDATE_REPLAY_TTL_MS = Math.max(10_000, Number(process.env.NEELIFY_WA_API_MESSAGE_UPDATE_REPLAY_TTL_MS || 120_000));
+const waApiMessageUpdateReplayCache = new Map();
+const extractUpdateReplayPreview = (message = {}) => {
+    if (!message || typeof message !== "object") {
+        return "";
+    }
+    const preview = message.conversation
+        || (((message === null || message === void 0 ? void 0 : message.extendedTextMessage) || {}).text)
+        || (((message === null || message === void 0 ? void 0 : message.imageMessage) || {}).caption)
+        || (((message === null || message === void 0 ? void 0 : message.videoMessage) || {}).caption)
+        || (((message === null || message === void 0 ? void 0 : message.buttonsResponseMessage) || {}).selectedDisplayText)
+        || (((message === null || message === void 0 ? void 0 : message.listResponseMessage) || {}).title)
+        || (((message === null || message === void 0 ? void 0 : message.templateButtonReplyMessage) || {}).selectedDisplayText)
+        || (((((message === null || message === void 0 ? void 0 : message.interactiveResponseMessage) || {}).nativeFlowResponseMessage) || {}).paramsJson)
+        || "";
+    return String(preview).trim().slice(0, 160);
+};
+const shouldReplayMessageUpdateAsIncoming = (sessionId = "", event = null) => {
+    var _a, _b, _c;
+    const message = (_a = event === null || event === void 0 ? void 0 : event.update) === null || _a === void 0 ? void 0 : _a.message;
+    if (!message || typeof message !== "object") {
+        return false;
+    }
+    const messageKeys = Object.keys(message).filter((key) => key && key !== "messageContextInfo" && key !== "senderKeyDistributionMessage");
+    if (!messageKeys.length) {
+        return false;
+    }
+    const cacheKey = [
+        String(sessionId || "").trim() || "unknown-session",
+        String(((_b = event === null || event === void 0 ? void 0 : event.key) === null || _b === void 0 ? void 0 : _b.remoteJid) || "").trim() || "unknown-chat",
+        String(((_c = event === null || event === void 0 ? void 0 : event.key) === null || _c === void 0 ? void 0 : _c.id) || "").trim() || "unknown-id",
+        messageKeys.sort().join(","),
+        extractUpdateReplayPreview(message)
+    ].join("|");
+    const now = Date.now();
+    const lastReplayTs = Number(waApiMessageUpdateReplayCache.get(cacheKey) || 0);
+    if (lastReplayTs && (now - lastReplayTs) < WA_API_MESSAGE_UPDATE_REPLAY_TTL_MS) {
+        return false;
+    }
+    waApiMessageUpdateReplayCache.set(cacheKey, now);
+    if (waApiMessageUpdateReplayCache.size > 5000) {
+        for (const [key, ts] of waApiMessageUpdateReplayCache.entries()) {
+            if (now - Number(ts || 0) > WA_API_MESSAGE_UPDATE_REPLAY_TTL_MS) {
+                waApiMessageUpdateReplayCache.delete(key);
+            }
+        }
+    }
+    return true;
+};
+const buildIncomingMessageFromUpdate = (sessionId = "", event = null) => {
+    var _a, _b;
+    const update = (event === null || event === void 0 ? void 0 : event.update) || {};
+    const replayMsg = Object.assign(Object.assign({}, update), { key: Object.assign({}, (event === null || event === void 0 ? void 0 : event.key) || {}), message: update.message, messageTimestamp: update.messageTimestamp || Math.floor(Date.now() / 1000), pushName: update.pushName || "", broadcast: String(((_a = event === null || event === void 0 ? void 0 : event.key) === null || _a === void 0 ? void 0 : _a.remoteJid) || "").endsWith("@broadcast"), newsletter: String(((_b = event === null || event === void 0 ? void 0 : event.key) === null || _b === void 0 ? void 0 : _b.remoteJid) || "").includes("@newsletter"), __fromMessageUpdateReplay: true });
+    return attachSocketMessageHelpers(replayMsg, sessionId);
+};
 const checkWaApiUpdate = () => {
     if (waApiUpdateInfo) {
         return Promise.resolve(waApiUpdateInfo);
@@ -216,7 +469,7 @@ const startSession = (sessionId = "mysession", options = { printQR: true }) => _
     const startSocket = () => __awaiter(void 0, void 0, void 0, function* () {
         const shouldPrintQrInTerminal = Boolean(options.printQR) && !callback.get(Defaults_1.CALLBACK_KEY.ON_QR);
         const { state, saveCreds } = yield (0, baileys_1.useMultiFileAuthState)(path_1.default.resolve(Defaults_1.CREDENTIALS.DIR_NAME, sessionId + Defaults_1.CREDENTIALS.SUFFIX));
-        const sock = (0, baileys_1.default)({
+        const sock = patchSocketForInteractiveFallback((0, baileys_1.default)({
             version,
             printQRInTerminal: shouldPrintQrInTerminal,
             auth: createSocketAuthState(state, logger),
@@ -224,7 +477,7 @@ const startSession = (sessionId = "mysession", options = { printQR: true }) => _
             markOnlineOnConnect: false,
             patchMessageBeforeSending: baileys_1.patchMessageForMdIfRequired || ((message) => message),
             browser: baileys_1.Browsers.ubuntu("Chrome"),
-        });
+        }), sessionId);
         sessions.set(sessionId, Object.assign({}, sock));
         try {
                 
@@ -274,14 +527,15 @@ const startSession = (sessionId = "mysession", options = { printQR: true }) => _
                     const msg = events["messages.update"][0];
                     const data = Object.assign({ sessionId: sessionId, messageStatus: (0, message_status_1.parseMessageStatusCodeToReadable)(msg.update.status) }, msg);
                     (_h = callback.get(Defaults_1.CALLBACK_KEY.ON_MESSAGE_UPDATED)) === null || _h === void 0 ? void 0 : _h(sessionId, data);
+                    if (shouldReplayMessageUpdateAsIncoming(sessionId, msg)) {
+                        const replayMsg = buildIncomingMessageFromUpdate(sessionId, msg);
+                        callback.get(Defaults_1.CALLBACK_KEY.ON_MESSAGE_RECEIVED)?.(Object.assign({}, replayMsg));
+                    }
                 }
                 if (events["messages.upsert"]) {
                     const msg = (_j = events["messages.upsert"]
                         .messages) === null || _j === void 0 ? void 0 : _j[0];
-                    msg.sessionId = sessionId;
-                    msg.saveImage = (path) => (0, save_media_1.saveImageHandler)(msg, path);
-                    msg.saveVideo = (path) => (0, save_media_1.saveVideoHandler)(msg, path);
-                    msg.saveDocument = (path) => (0, save_media_1.saveDocumentHandler)(msg, path);
+                    attachSocketMessageHelpers(msg, sessionId);
                     (_k = callback.get(Defaults_1.CALLBACK_KEY.ON_MESSAGE_RECEIVED)) === null || _k === void 0 ? void 0 : _k(Object.assign({}, msg));
                 }
             }));
@@ -324,7 +578,7 @@ const startSessionWithPairingCode = (sessionId = "mysession", options = { phoneN
 var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
    const { state, saveCreds } = yield (0, baileys_1.useMultiFileAuthState)(path_1.default.resolve(Defaults_1.CREDENTIALS.DIR_NAME, sessionId + Defaults_1.CREDENTIALS.SUFFIX));
    
-          const sock = (0, baileys_1.default)({
+          const sock = patchSocketForInteractiveFallback((0, baileys_1.default)({
               version,
               printQRInTerminal: false,
               auth: createSocketAuthState(state, logger),
@@ -332,7 +586,7 @@ var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
               markOnlineOnConnect: false,
               patchMessageBeforeSending: baileys_1.patchMessageForMdIfRequired || ((message) => message),
               browser: baileys_1.Browsers.ubuntu("Chrome"),
-          });
+          }), sessionId);
      sessions.set(sessionId, { ...sock });
     try {
        if (!sock.authState.creds.registered) {
@@ -384,14 +638,15 @@ var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
                     const msg = events["messages.update"][0];
                     const data = Object.assign({ sessionId: sessionId, messageStatus: (0, message_status_1.parseMessageStatusCodeToReadable)(msg.update.status) }, msg);
                     (_h = callback.get(Defaults_1.CALLBACK_KEY.ON_MESSAGE_UPDATED)) === null || _h === void 0 ? void 0 : _h(sessionId, data);
+                    if (shouldReplayMessageUpdateAsIncoming(sessionId, msg)) {
+                        const replayMsg = buildIncomingMessageFromUpdate(sessionId, msg);
+                        callback.get(Defaults_1.CALLBACK_KEY.ON_MESSAGE_RECEIVED)?.(Object.assign({}, replayMsg));
+                    }
                 }
                 if (events["messages.upsert"]) {
                     const msg = (_j = events["messages.upsert"]
                         .messages) === null || _j === void 0 ? void 0 : _j[0];
-                    msg.sessionId = sessionId;
-                    msg.saveImage = (path) => (0, save_media_1.saveImageHandler)(msg, path);
-                    msg.saveVideo = (path) => (0, save_media_1.saveVideoHandler)(msg, path);
-                    msg.saveDocument = (path) => (0, save_media_1.saveDocumentHandler)(msg, path);
+                    attachSocketMessageHelpers(msg, sessionId);
                     (_k = callback.get(Defaults_1.CALLBACK_KEY.ON_MESSAGE_RECEIVED)) === null || _k === void 0 ? void 0 : _k(Object.assign({}, msg));
                 }
       });

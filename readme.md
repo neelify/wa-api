@@ -5,8 +5,8 @@
 ### *Multi-Session WhatsApp – einfach & stabil*  
 ### *QR · Pairing · Auto-Reconnect · Smart Queue Ready*
 
-[![Version](https://img.shields.io/badge/Version-1.7.11-ff69b4?style=for-the-badge&logo=github)](https://github.com/neelify/wa-api)
-[![Baileys](https://img.shields.io/badge/@neelify/baileys-2.2.13-9b59b6?style=for-the-badge)](https://www.npmjs.com/package/@neelify/baileys)
+[![Version](https://img.shields.io/badge/Version-1.7.13-ff69b4?style=for-the-badge&logo=github)](https://github.com/neelify/wa-api)
+[![Baileys](https://img.shields.io/badge/@neelify/baileys-2.2.14-9b59b6?style=for-the-badge)](https://www.npmjs.com/package/@neelify/baileys)
 [![Baileys API](https://img.shields.io/badge/Baileys_API-1.7.2-9b59b6?style=for-the-badge)](https://github.com/WhiskeySockets/Baileys)
 [![npm](https://img.shields.io/npm/v/@neelify/wa-api?style=for-the-badge&color=ff69b4&logo=npm)](https://www.npmjs.com/package/@neelify/wa-api)
 [![Downloads](https://img.shields.io/npm/dw/@neelify/wa-api?style=for-the-badge&color=ff69b4&logo=npm)](https://www.npmjs.com/package/@neelify/wa-api)
@@ -22,9 +22,9 @@
 
 | 📦 Paket | 🎯 Baileys | ✨ Highlights |
 |----------|------------|----------------|
-| **@neelify/wa-api v1.7.11** | **@neelify/baileys 2.2.13** | Multi-Session · QR · Pairing · Update-Check von npm |
+| **@neelify/wa-api v1.7.13** | **@neelify/baileys 2.2.14** | Multi-Session · QR · Pairing · Update-Check von npm |
 
-**✨ v1.7.11** · README Glow-Up · Kompatibel mit **@neelify/baileys 2.2.13** & **Baileys API 1.7.2** · Update-Prüfung via npm-Registry
+**✨ v1.7.13** · Mobile-Compat für interaktive Menüs · Replay von später eintreffenden `messages.update`-Inhalten · Kompatibel mit **@neelify/baileys 2.2.14** & **Baileys API 1.7.2**
 
 [**Installation**](#-installation) · [**Quickstart**](#-quickstart-guide) · [**Features**](#-features) · [**API**](#-vollständige-api-referenz) · [**Support**](#-support--community)
 
@@ -68,7 +68,13 @@
 | 🎨 **Einfach** | Simple API für Anfänger | ✅ |
 | 🚀 **Smart Queue** | Nutzt Baileys Smart Message Queue | ✅ |
 
-> ⚠️ **Wichtig**: Diese Library funktioniert **ausschließlich** mit **@neelify/baileys** (empfohlen **v2.2.13**, Baileys API **1.7.2**)!
+> ⚠️ **Wichtig**: Diese Library funktioniert **ausschließlich** mit **@neelify/baileys** (empfohlen **v2.2.14**, Baileys API **1.7.2**)!
+
+## 🆕 Neu in v1.7.13
+
+- Interaktive `viewOnce`- und `interactiveMessage`-Payloads werden für fragile Mobile-Clients automatisch in eine lesbare Text-Fallback-Nachricht umgewandelt.
+- Nachrichten, die zuerst nur als Platzhalter ankommen und ihren Inhalt erst per `messages.update` liefern, werden als eingehendes Event erneut an den Consumer weitergereicht.
+- Die bestehende Session-Logik für QR, Pairing und Auto-Reconnect bleibt dabei unverändert.
 
 ---
 

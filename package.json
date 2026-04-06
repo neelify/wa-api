@@ -1,6 +1,6 @@
 {
   "name": "@neelify/wa-api",
-  "version": "1.7.12",
+  "version": "1.7.13",
   "description": "Multi-session wrapper API for @neelify/baileys (WhatsApp Web)",
   "main": "dist/index.js",
   "module": "dist/index.js",
