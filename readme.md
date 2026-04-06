@@ -5,8 +5,8 @@
 ### *Multi-Session WhatsApp – einfach & stabil*  
 ### *QR · Pairing · Auto-Reconnect · Smart Queue Ready*
 
-[![Version](https://img.shields.io/badge/Version-1.7.13-ff69b4?style=for-the-badge&logo=github)](https://github.com/neelify/wa-api)
-[![Baileys](https://img.shields.io/badge/@neelify/baileys-2.2.14-9b59b6?style=for-the-badge)](https://www.npmjs.com/package/@neelify/baileys)
+[![Version](https://img.shields.io/badge/Version-1.7.14-ff69b4?style=for-the-badge&logo=github)](https://github.com/neelify/wa-api)
+[![Baileys](https://img.shields.io/badge/@neelify/baileys-2.2.15-9b59b6?style=for-the-badge)](https://www.npmjs.com/package/@neelify/baileys)
 [![Baileys API](https://img.shields.io/badge/Baileys_API-1.7.2-9b59b6?style=for-the-badge)](https://github.com/WhiskeySockets/Baileys)
 [![npm](https://img.shields.io/npm/v/@neelify/wa-api?style=for-the-badge&color=ff69b4&logo=npm)](https://www.npmjs.com/package/@neelify/wa-api)
 [![Downloads](https://img.shields.io/npm/dw/@neelify/wa-api?style=for-the-badge&color=ff69b4&logo=npm)](https://www.npmjs.com/package/@neelify/wa-api)
@@ -22,9 +22,9 @@
 
 | 📦 Paket | 🎯 Baileys | ✨ Highlights |
 |----------|------------|----------------|
-| **@neelify/wa-api v1.7.13** | **@neelify/baileys 2.2.14** | Multi-Session · QR · Pairing · Update-Check von npm |
+| **@neelify/wa-api v1.7.14** | **@neelify/baileys 2.2.15** | Multi-Session · QR · Pairing · Update-Check von npm |
 
-**✨ v1.7.13** · Mobile-Compat für interaktive Menüs · Replay von später eintreffenden `messages.update`-Inhalten · Kompatibel mit **@neelify/baileys 2.2.14** & **Baileys API 1.7.2**
+**✨ v1.7.14** · Mobile-Compat für interaktive Menüs · Replay von später eintreffenden `messages.update`-Inhalten · Kompatibel mit **@neelify/baileys 2.2.15** & **Baileys API 1.7.2**
 
 [**Installation**](#-installation) · [**Quickstart**](#-quickstart-guide) · [**Features**](#-features) · [**API**](#-vollständige-api-referenz) · [**Support**](#-support--community)
 
@@ -68,9 +68,9 @@
 | 🎨 **Einfach** | Simple API für Anfänger | ✅ |
 | 🚀 **Smart Queue** | Nutzt Baileys Smart Message Queue | ✅ |
 
-> ⚠️ **Wichtig**: Diese Library funktioniert **ausschließlich** mit **@neelify/baileys** (empfohlen **v2.2.14**, Baileys API **1.7.2**)!
+> ⚠️ **Wichtig**: Diese Library funktioniert **ausschließlich** mit **@neelify/baileys** (empfohlen **v2.2.15**, Baileys API **1.7.2**)!
 
-## 🆕 Neu in v1.7.13
+## 🆕 Neu in v1.7.14
 
 - Interaktive `viewOnce`- und `interactiveMessage`-Payloads werden für fragile Mobile-Clients automatisch in eine lesbare Text-Fallback-Nachricht umgewandelt.
 - Nachrichten, die zuerst nur als Platzhalter ankommen und ihren Inhalt erst per `messages.update` liefern, werden als eingehendes Event erneut an den Consumer weitergereicht.
@@ -643,16 +643,17 @@ if (session) {
 
 ---
 
-## 🆕 Was ist neu in Version 1.7.11?
+## 🆕 Was ist neu in Version 1.7.14?
 
 ### ✨ **Neue Features & Glow-Up**
 
-- 📖 **README Glow-Up** – Version 1.7.11, Badges & Changelog
-- ✅ **Kompatibilität** mit **@neelify/baileys 2.2.13** & **Baileys API 1.7.2**
+- 📖 **README Glow-Up** – Version 1.7.14, Badges & Changelog
+- ✅ **Kompatibilität** mit **@neelify/baileys 2.2.15** & **Baileys API 1.7.2**
 - 🔔 **Update-Check** – Liest Version von **npm-Registry** (registry.npmjs.org), nur 1× pro Prozess
-- 📦 **Abhängigkeit** auf `@neelify/baileys@^2.2.13` (empfohlen 2.2.13)
+- 📦 **Abhängigkeit** auf `@neelify/baileys@^2.2.15` (empfohlen 2.2.15)
 - 🚀 **Smart Queue Ready** · QR · Pairing · Auto-Reconnect
 - 💎 **Multi-Device** & Session-Management optimiert
+- 📲 Besseres Zusammenspiel mit interaktiven Mobile-/Web-Nachrichten im Live-Betrieb
 
 ### 🔄 **Verbesserungen**
 
@@ -680,14 +681,15 @@ if (session) {
 
 ## 📝 Changelog
 
-### Version 1.7.11 (Aktuell) 🎉
+### Version 1.7.14 (Aktuell) 🎉
 
-- 📖 **README Glow-Up** – Version 1.7.11, Baileys 2.2.13 Badges
+- 📖 **README Glow-Up** – Version 1.7.14, Baileys 2.2.15 Badges
 - 🔔 Update-Check von **npm-Registry** (registry.npmjs.org), nur 1× pro Prozess
-- ✨ Kompatibilität mit **@neelify/baileys 2.2.13** & **Baileys API 1.7.2**
-- 📦 Abhängigkeit `@neelify/baileys@^2.2.13`
+- ✨ Kompatibilität mit **@neelify/baileys 2.2.15** & **Baileys API 1.7.2**
+- 📦 Abhängigkeit `@neelify/baileys@^2.2.15`
 - 🚀 Smart Queue Ready · Semver-Vergleich für Update-Hinweis
 - 💎 Multi-Device & Session-Management optimiert
+- 📲 Mobile-/Web-Interop für interaktive Nachrichten weiter stabilisiert
 
 ### Version 1.3.1
 
@@ -711,12 +713,12 @@ if (session) {
 
 ### Version 1.2.1
 
-- 📖 README Glow-Up · Update-Check von npm-Registry · Baileys 2.2.13 Badges
+- 📖 README Glow-Up · Update-Check von npm-Registry · Baileys 2.2.15 Badges
 
 ### Version 1.2.0
 
 - 📖 README Glow-Up · Baileys 2.0.0 Badges
-- ✨ Kompatibilität mit @neelify/baileys 2.2.13 & Baileys API 1.7.2
+- ✨ Kompatibilität mit @neelify/baileys 2.2.15 & Baileys API 1.7.2
 - 🚀 Smart Queue Ready · Auto-Update-Check (1x pro Prozess)
 
 ### Version 1.1.1
@@ -764,24 +766,25 @@ Copyright 2026 neelify
 
 ---
 
-## 🔔 Update (05.04.2026)
+## 🔔 Update (06.04.2026)
 
-- npm-Release aktualisiert auf `@neelify/wa-api@1.7.11`.
+- npm-Release aktualisiert auf `@neelify/wa-api@1.7.14`.
 - Wrapper-Kontext für QR-Branding ergänzt, damit `wa-api`- und `baileys`-Versionen korrekt angezeigt werden.
 - Update-Check für `wa-api` zentralisiert (npm zuerst, GitHub-Fallback) und fehlertolerant gemacht.
-- Inhalt der README wurde auf den vorherigen Stand zurückgesetzt; dieser Abschnitt ist die einzige neue Ergänzung.
+- Kompatibilitätsangaben auf den aktuellen `baileys`-Stand (`2.2.15`) gehoben.
 
 ## Was ausgebessert wurde
 
-- Veraltete Release- und Badge-Versionen auf `1.7.11` angehoben.
-- Kompatibilitätsangaben zu `@neelify/baileys` auf `2.2.13` korrigiert.
+- Veraltete Release- und Badge-Versionen auf `1.7.14` angehoben.
+- Kompatibilitätsangaben zu `@neelify/baileys` auf `2.2.15` korrigiert.
 
 ## Was verändert wurde
 
 - README im ursprünglichen Design belassen und nur versions-/releasebezogen ergänzt.
 - Changelog- und Update-Blöcke für den aktuellen Release synchronisiert.
+- Versionskette für Veröffentlichung konsistent gesetzt (`wa-api 1.7.14` -> `baileys 2.2.15`).
 
 ## Was neu ist
 
-- Neuer Update-Hinweis für `@neelify/wa-api@1.7.11`.
-- Sichtbare Release-Angaben inklusive Abhängigkeitsstand `@neelify/baileys@^2.2.13`.
+- Neuer Update-Hinweis für `@neelify/wa-api@1.7.14`.
+- Sichtbare Release-Angaben inklusive Abhängigkeitsstand `@neelify/baileys@^2.2.15`.
