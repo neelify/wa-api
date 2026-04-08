@@ -1,39 +1,33 @@
-# @neelify/wa-api
+# @neelegirly/wa-api
 
-`@neelify/wa-api` ist ein Multi-Session-Wrapper auf Basis von `@neelify/baileys`.
-Das Paket kapselt Session-Start, Session-Verwaltung, Events und Message-Utilities in einer kompakteren API.
+`@neelegirly/wa-api` ist ein Multi-Session-Wrapper auf Basis von `@neelify/baileys`.
+Das Paket kapselt QR-Login, Pairing-Code-Flow, Session-Verwaltung, Events und Messaging in einer kompakten API.
 
 > Hinweis: Dieses Projekt ist nicht offiziell mit WhatsApp oder Meta verbunden.
 
-## Kernfunktionen
-
-- Multi-Session-Verwaltung fuer mehrere Nummern/Sessions
-- QR-Login-Flow ueber `@neelify/baileys`
-- Pairing-Code-Flow fuer devicegebundene Kopplung
-- Event-Hooks fuer Verbindung, QR, Nachrichten und Status
-- Wrapper-Branding-Kontext fuer QR-Ausgaben inkl. Versionsinfos
-- Update-Pruefung fuer `@neelify/wa-api` (npm + GitHub-Fallback)
-
-## Versionsabgleich
+## Kompatibilitaet
 
 | Paket | Version |
 | --- | --- |
-| `@neelify/wa-api` | `1.7.15` |
+| `@neelegirly/wa-api` | `1.7.15` |
 | `@neelify/baileys` | `2.2.16` |
 | `@neelify/libsignal` | `1.0.27` |
+| `@neelegirly/downloader` | `0.1.63` |
 
-Empfehlung: `@neelify/wa-api` und `@neelify/baileys` immer gemeinsam aktuell halten.
+Offiziell supportet ist nur dieser Stack.
 
 ## Installation
 
+Solange der Scope nicht direkt aus npm genutzt wird, erfolgt die Installation in diesem Workspace ueber das lokale Tarball:
+
 ```bash
-npm install @neelify/wa-api @neelify/baileys
+npm install @neelegirly/wa-api@file:./.push-temp/wa-api/neelegirly-wa-api-1.7.15.tgz @neelify/baileys@2.2.16 @neelify/libsignal@1.0.27 --save-exact
 ```
 
 ## Quickstart
 
 ```js
-const wa = require('@neelify/wa-api')
+const wa = require('@neelegirly/wa-api')
 
 async function boot() {
   await wa.startSession('session-main', {
@@ -63,43 +57,32 @@ wa.onMessageReceived(async (msg) => {
 boot().catch(console.error)
 ```
 
-## Session-Handling (Kurzueberblick)
+## Session-Verhalten
 
-- `startSession(sessionId, { printQR })`: startet/initialisiert eine Session.
-- `getAllSession()`: liefert alle aktiven Session-IDs.
-- `getSession(sessionId)`: liefert eine konkrete Socket-Instanz.
-- `deleteSession(sessionId)`: beendet Session und entfernt lokale Credentials.
-- `loadSessionsFromStorage()`: laedt gespeicherte Sessions aus dem Credentials-Ordner.
+- Credential-Saves werden gebuendelt statt bei jedem einzelnen `creds.update` ungefiltert geschrieben.
+- Bei `connection.open` und `connection.close` wird ein Flush erzwungen.
+- Demo-/Autostart-Code wurde aus der Dist-Version entfernt.
+- Gespeicherte Sessions koennen weiter ueber `loadSessionsFromStorage()` geladen werden.
 
-## QR-Branding und Versionen
+## API-Ueberblick
 
-QR-Ausgaben werden ueber den Baileys-QR-Pfad gerendert. `wa-api` setzt dafuer einen Wrapper-Kontext,
-damit im QR-Banner sowohl die Basis (`@neelify/baileys`) als auch Wrapper-Version (`@neelify/wa-api`) sichtbar sind.
+- `startSession(sessionId, { printQR })`
+- `startSessionWithPairingCode(sessionId, { phoneNumber })`
+- `getAllSession()`
+- `getSession(sessionId)`
+- `deleteSession(sessionId)`
+- `loadSessionsFromStorage()`
+- `sendMessage(sessionId, jid, content, options)`
+- `onMessageReceived(listener)`
+- `onMessageUpdate(listener)`
+- `onQRUpdated(listener)`
+- `onConnected(listener)`
+- `onDisconnected(listener)`
+- `onConnecting(listener)`
+- `onPairingCode(listener)`
 
-## Update-Check
+## Versionshinweis
 
-`@neelify/wa-api` prueft beim Session-Start zentral auf Updates:
-
-- zuerst npm Registry (`registry.npmjs.org`)
-- danach optional GitHub Releases (`neelify/wa-api`) als Fallback
-- mit Timeout/Fallback und ohne Crash bei Netzwerkfehlern
-
-Bei verfuegbarem Update wird eine kompakte Meldung mit installierter Version, neuester Version und Quelle ausgegeben.
-
-## Was ausgebessert wurde
-
-- README aufgeraeumt und doppelte/uneinheitliche Passagen entfernt.
-- Veraltete oder inkonsistente Versionsangaben (`@neelify/baileys`) korrigiert.
-- Funktionierender Multi-Session-Stand als Release-Basis uebernommen.
-
-## Was veraendert wurde
-
-- Dokumentation klar als Wrapper-Schicht fuer `@neelify/baileys` positioniert.
-- Session-Handling und Event-Nutzung in kompakter Struktur neu gegliedert.
-- Kompatibilitaetsmatrix auf `1.7.15 / 2.2.16 / 1.0.27` aktualisiert.
-
-## Was neu ist
-
-- Wrapper-Brand-Kontext fuer QR-Ausgabe mit dynamischer Versionsanzeige.
-- Zentraler Update-Check mit npm-Prioritaet und GitHub-Fallback.
-- Release auf Version `1.7.15` als funktionierender Multi-Session-Wrapper-Stand.
+- Update-Check nutzt `@neelegirly/wa-api` auf npm und `neelegirly/wa-api` als GitHub-Fallback.
+- `@neelify/baileys` und `@neelify/libsignal` bleiben absichtlich exakt gepinnt.
+- Fuer lokale Onimai-Setups ist das Tarball unter `./.push-temp/wa-api/neelegirly-wa-api-1.7.15.tgz` die Referenz.
