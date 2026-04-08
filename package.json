@@ -1,7 +1,7 @@
 {
-  "name": "@neelify/wa-api",
+  "name": "@neelegirly/wa-api",
   "version": "1.7.15",
-  "description": "Multi-session wrapper API for @neelify/baileys (WhatsApp Web)",
+  "description": "Neelegirly multi-session wrapper API for @neelify/baileys (WhatsApp Web)",
   "main": "dist/index.js",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -15,11 +15,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/neelify/wa-api.git"
+    "url": "git+https://github.com/neelegirly/wa-api.git"
   },
-  "homepage": "https://github.com/neelify/wa-api#readme",
+  "homepage": "https://github.com/neelegirly/wa-api#readme",
   "bugs": {
-    "url": "https://github.com/neelify/wa-api/issues"
+    "url": "https://github.com/neelegirly/wa-api/issues"
   },
   "files": [
     "dist/**/*",
@@ -33,7 +33,7 @@
     "run-script": "node ./dist/index.js"
   },
   "author": {
-    "name": "Neelify"
+    "name": "Neelegirly"
   },
   "license": "ISC",
   "dependencies": {
@@ -55,10 +55,11 @@
     "access": "public"
   },
   "keywords": [
-    "neelify",
+    "neelegirly",
     "whatsapp",
     "baileys",
     "multi-session",
-    "wa-api"
+    "wa-api",
+    "qr-branding"
   ]
 }

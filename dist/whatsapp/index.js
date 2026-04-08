@@ -45,6 +45,7 @@ const Error_1 = require("../Error");
 const pino_1 = __importDefault(require("pino"));
 const message_status_1 = require("../Utils/message-status");
 const save_media_1 = require("../Utils/save-media");
+const credential_save_manager_1 = require("../Utils/credential-save-manager");
 class Whatsapp {
     constructor(options = {}) {
         this.sockets = new Map();
@@ -68,6 +69,7 @@ class Whatsapp {
             const startSocket = () => __awaiter(this, void 0, void 0, function* () {
                 var _a;
                 const { state, saveCreds } = yield (0, baileys_1.useMultiFileAuthState)(path_1.default.resolve(Defaults_1.CREDENTIALS.DIR_NAME, socket.id + "_" + socket.phoneNumber + Defaults_1.CREDENTIALS.SUFFIX));
+                const managedSaveCreds = (0, credential_save_manager_1.createCredentialSaveManager)(saveCreds, { label: socket.id, logger });
                 const sock = (0, baileys_1.default)({
                     version,
                     auth: {
@@ -93,6 +95,7 @@ class Whatsapp {
                                 (_c = socket.onConnecting) === null || _c === void 0 ? void 0 : _c.call(socket);
                             }
                             if (connection === "close") {
+                                yield managedSaveCreds.flush("connection-close");
                                 const code = (_e = (_d = lastDisconnect === null || lastDisconnect === void 0 ? void 0 : lastDisconnect.error) === null || _d === void 0 ? void 0 : _d.output) === null || _e === void 0 ? void 0 : _e.statusCode;
                                 let retryAttempt = (_f = this.retryCount.get(socket.id)) !== null && _f !== void 0 ? _f : 0;
                                 let shouldRetry;
@@ -113,12 +116,13 @@ class Whatsapp {
                                 }
                             }
                             if (connection == "open") {
+                                yield managedSaveCreds.flush("connection-open");
                                 this.retryCount.delete(socket.id);
                                 (_h = socket.onConnected) === null || _h === void 0 ? void 0 : _h.call(socket);
                             }
                         }
                         if (events["creds.update"]) {
-                            yield saveCreds();
+                            yield managedSaveCreds();
                         }
                         if (events["messages.update"]) {
                             const msg = events["messages.update"][0];
@@ -197,10 +201,3 @@ class Whatsapp {
     }
 }
 exports.Whatsapp = Whatsapp;
-const wa = new Whatsapp();
-// wa.load();
-const mySocket = new Socket_1.Socket({ id: "mysocket", phoneNumber: "6281524538841" });
-mySocket.onPairing = (code) => {
-    console.log(code);
-};
-wa.startSession(mySocket);

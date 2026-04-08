@@ -45,6 +45,7 @@ const Defaults_1 = require("../Defaults");
 const save_media_1 = require("../Utils/save-media");
 const Error_1 = require("../Error");
 const message_status_1 = require("../Utils/message-status");
+const credential_save_manager_1 = require("../Utils/credential-save-manager");
 const sessions = new Map();
 const callback = new Map();
 const retryCount = new Map();
@@ -96,7 +97,7 @@ const requestJson = (url, options = {}) => {
     return new Promise((resolve, reject) => {
         const req = https_1.default.get(url, {
             timeout: Number(options.timeoutMs) > 0 ? Number(options.timeoutMs) : 5000,
-            headers: Object.assign({ "User-Agent": "@neelify/wa-api update-check", "Accept": "application/json" }, ((_a = options.headers) !== null && _a !== void 0 ? _a : {}))
+            headers: Object.assign({ "User-Agent": "@neelegirly/wa-api update-check", "Accept": "application/json" }, ((_a = options.headers) !== null && _a !== void 0 ? _a : {}))
         }, (res) => {
             let data = "";
             res.on("data", (chunk) => {
@@ -124,7 +125,7 @@ const requestJson = (url, options = {}) => {
 const fetchLatestWaApiVersion = () => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c, _d;
     try {
-        const npmInfo = yield requestJson("https://registry.npmjs.org/@neelify/wa-api/latest", { timeoutMs: 5000 });
+        const npmInfo = yield requestJson("https://registry.npmjs.org/@neelegirly/wa-api/latest", { timeoutMs: 5000 });
         const latestFromNpm = normalizeVersion(((_b = (_a = npmInfo === null || npmInfo === void 0 ? void 0 : npmInfo.version) === null || _a === void 0 ? void 0 : _a.trim()) !== null && _b !== void 0 ? _b : "") || null);
         if (latestFromNpm) {
             return { latest: latestFromNpm, source: "npm" };
@@ -132,7 +133,7 @@ const fetchLatestWaApiVersion = () => __awaiter(void 0, void 0, void 0, function
     }
     catch (_e) { }
     try {
-        const ghInfo = yield requestJson("https://api.github.com/repos/neelify/wa-api/releases/latest", {
+        const ghInfo = yield requestJson("https://api.github.com/repos/neelegirly/wa-api/releases/latest", {
             timeoutMs: 6000,
             headers: { "Accept": "application/vnd.github+json" }
         });
@@ -155,7 +156,7 @@ const resolveBaileysVersion = () => {
     }
 };
 const applyQrBrandContext = (updateInfo) => {
-    process.env.NEELIFY_WRAPPER_PACKAGE = "@neelify/wa-api";
+    process.env.NEELIFY_WRAPPER_PACKAGE = "@neelegirly/wa-api";
     process.env.NEELIFY_WRAPPER_VERSION = CURRENT_WA_API_VERSION;
     if (updateInfo === null || updateInfo === void 0 ? void 0 : updateInfo.hasUpdate) {
         process.env.NEELIFY_WRAPPER_UPDATE = updateInfo.latest;
@@ -191,7 +192,7 @@ const checkWaApiUpdate = () => {
                 source
             };
             console.log(
-                `[wa-api] Neue Version verfuegbar | Installiert: ${waApiUpdateInfo.current} | Neueste: ${waApiUpdateInfo.latest} | Quelle: ${waApiUpdateInfo.source}`
+                `[@neelegirly/wa-api] Neue Version verfuegbar | Installiert: ${waApiUpdateInfo.current} | Neueste: ${waApiUpdateInfo.latest} | Quelle: ${waApiUpdateInfo.source}`
             );
             return waApiUpdateInfo;
         }
@@ -215,9 +216,11 @@ const startSession = (sessionId = "mysession", options = { printQR: true }) => _
     const { version } = yield (0, baileys_1.fetchLatestBaileysVersion)();
     const startSocket = () => __awaiter(void 0, void 0, void 0, function* () {
         const { state, saveCreds } = yield (0, baileys_1.useMultiFileAuthState)(path_1.default.resolve(Defaults_1.CREDENTIALS.DIR_NAME, sessionId + Defaults_1.CREDENTIALS.SUFFIX));
+        const managedSaveCreds = (0, credential_save_manager_1.createCredentialSaveManager)(saveCreds, { label: sessionId, logger });
+        const shouldPrintQrInTerminal = Boolean(options.printQR) && !callback.has(Defaults_1.CALLBACK_KEY.ON_QR);
         const sock = (0, baileys_1.default)({
             version,
-            printQRInTerminal: options.printQR,
+            printQRInTerminal: shouldPrintQrInTerminal,
             auth: createSocketAuthState(state, logger),
             logger,
             markOnlineOnConnect: false,
@@ -241,6 +244,7 @@ const startSession = (sessionId = "mysession", options = { printQR: true }) => _
                         (_b = callback.get(Defaults_1.CALLBACK_KEY.ON_CONNECTING)) === null || _b === void 0 ? void 0 : _b(sessionId);
                     }
                     if (connection === "close") {
+                            yield managedSaveCreds.flush("connection-close");
                         const code = (_d = (_c = lastDisconnect === null || lastDisconnect === void 0 ? void 0 : lastDisconnect.error) === null || _c === void 0 ? void 0 : _c.output) === null || _d === void 0 ? void 0 : _d.statusCode;
                         let retryAttempt = (_e = retryCount.get(sessionId)) !== null && _e !== void 0 ? _e : 0;
                         let shouldRetry;
@@ -261,12 +265,13 @@ const startSession = (sessionId = "mysession", options = { printQR: true }) => _
                         }
                     }
                     if (connection == "open") {
+                        yield managedSaveCreds.flush("connection-open");
                         retryCount.delete(sessionId);
                         (_g = callback.get(Defaults_1.CALLBACK_KEY.ON_CONNECTED)) === null || _g === void 0 ? void 0 : _g(sessionId);
                     }
                 }
                 if (events["creds.update"]) {
-                    yield saveCreds();
+                    yield managedSaveCreds();
                 }
                 if (events["messages.update"]) {
                     const msg = events["messages.update"][0];
@@ -300,9 +305,10 @@ const onimaii = (sessionId = "mysession", connect) => __awaiter(void 0, void 0, 
             const logger = (0, pino_1.default)({ level: "silent" });
             const { version } = yield (0, baileys_1.fetchLatestBaileysVersion)();
                 const { state, saveCreds } = yield (0, baileys_1.useMultiFileAuthState)(path_1.default.resolve(Defaults_1.CREDENTIALS.DIR_NAME, sessionId + Defaults_1.CREDENTIALS.SUFFIX));
+                const shouldPrintQrInTerminal = !callback.has(Defaults_1.CALLBACK_KEY.ON_QR);
                 const sock = (0, connect)({
                     version,
-                    printQRInTerminal: true,
+                    printQRInTerminal: shouldPrintQrInTerminal,
                     auth: createSocketAuthState(state, logger),
                     logger,
                     markOnlineOnConnect: false,
@@ -320,6 +326,7 @@ const startSessionWithPairingCode = (sessionId = "mysession", options = { phoneN
               const startSocket = () => __awaiter(void 0, void 0, void 0, function* () {
 var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
    const { state, saveCreds } = yield (0, baileys_1.useMultiFileAuthState)(path_1.default.resolve(Defaults_1.CREDENTIALS.DIR_NAME, sessionId + Defaults_1.CREDENTIALS.SUFFIX));
+    const managedSaveCreds = (0, credential_save_manager_1.createCredentialSaveManager)(saveCreds, { label: sessionId, logger });
    
           const sock = (0, baileys_1.default)({
               version,
@@ -349,6 +356,7 @@ var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
                         (_b = callback.get(Defaults_1.CALLBACK_KEY.ON_CONNECTING)) === null || _b === void 0 ? void 0 : _b(sessionId);
                     }
            if (connection === "close") {
+                  await managedSaveCreds.flush("connection-close");
               const code = (_d = (_c = lastDisconnect === null || lastDisconnect === void 0 ? void 0 : lastDisconnect.error) === null || _c === void 0 ? void 0 : _c.output) === null || _d === void 0 ? void 0 : _d.statusCode;
                         let retryAttempt = (_e = retryCount.get(sessionId)) !== null && _e !== void 0 ? _e : 0;
                         let shouldRetry;
@@ -369,12 +377,13 @@ var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
                         }
       }
       if (connection == "open") {
+                                await managedSaveCreds.flush("connection-open");
         retryCount.delete(sessionId);
         callback.get(Defaults_1.CALLBACK_KEY.ON_CONNECTED)?.(sessionId);
       }
     }
     if (events["creds.update"]) {
-      await saveCreds();
+            await managedSaveCreds();
     }
      if (events["messages.update"]) {
                     const msg = events["messages.update"][0];
