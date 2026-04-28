@@ -19,3 +19,4 @@ __exportStar(require("./is-exist"), exports);
 __exportStar(require("./create-delay"), exports);
 __exportStar(require("./set-credentials-dir"), exports);
 __exportStar(require("./set-credentials"), exports);
+__exportStar(require("./session-paths"), exports);

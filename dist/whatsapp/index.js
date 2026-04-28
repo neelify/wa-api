@@ -125,18 +125,30 @@ class Whatsapp {
                             yield managedSaveCreds();
                         }
                         if (events["messages.update"]) {
-                            const msg = events["messages.update"][0];
-                            const data = Object.assign({ sessionId: socket.id, messageStatus: (0, message_status_1.parseMessageStatusCodeToReadable)(msg.update.status) }, msg);
-                            (_j = socket.onMessageUpdated) === null || _j === void 0 ? void 0 : _j.call(socket, data);
+                            const updates = Array.isArray(events["messages.update"]) ? events["messages.update"] : [];
+                            for (const msg of updates) {
+                                if (!msg) {
+                                    continue;
+                                }
+                                const data = Object.assign({ sessionId: socket.id, messageStatus: (0, message_status_1.parseMessageStatusCodeToReadable)(msg === null || msg === void 0 ? void 0 : msg.update.status) }, msg);
+                                (_j = socket.onMessageUpdated) === null || _j === void 0 ? void 0 : _j.call(socket, data);
+                            }
                         }
                         if (events["messages.upsert"]) {
-                            const msg = (_k = events["messages.upsert"]
-                                .messages) === null || _k === void 0 ? void 0 : _k[0];
-                            msg.sessionId = socket.id;
-                            msg.saveImage = (path) => (0, save_media_1.saveImageHandler)(msg, path);
-                            msg.saveVideo = (path) => (0, save_media_1.saveVideoHandler)(msg, path);
-                            msg.saveDocument = (path) => (0, save_media_1.saveDocumentHandler)(msg, path);
-                            (_l = socket.onMessageReceived) === null || _l === void 0 ? void 0 : _l.call(socket, msg);
+                            const upsertMessages = Array.isArray((_k = events["messages.upsert"]) === null || _k === void 0 ? void 0 : _k.messages)
+                                ? events["messages.upsert"].messages
+                                : [];
+                            for (const msg of upsertMessages) {
+                                if (!msg || typeof msg !== "object") {
+                                    continue;
+                                }
+                                msg.sessionId = socket.id;
+                                msg.upsertType = String((events["messages.upsert"] === null || events["messages.upsert"] === void 0 ? void 0 : events["messages.upsert"].type) || "");
+                                msg.saveImage = (path) => (0, save_media_1.saveImageHandler)(msg, path);
+                                msg.saveVideo = (path) => (0, save_media_1.saveVideoHandler)(msg, path);
+                                msg.saveDocument = (path) => (0, save_media_1.saveDocumentHandler)(msg, path);
+                                (_l = socket.onMessageReceived) === null || _l === void 0 ? void 0 : _l.call(socket, msg);
+                            }
                         }
                     }));
                     if (!sock.authState.creds.registered) {

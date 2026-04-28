@@ -8,7 +8,8 @@ export declare enum CALLBACK_KEY {
     ON_CONNECTED = "on-connected",
     ON_DISCONNECTED = "on-disconnected",
     ON_CONNECTING = "on-connecting",
-    ON_MESSAGE_UPDATED = "on-message-updated"
+    ON_MESSAGE_UPDATED = "on-message-updated",
+    ON_PAIRING_CODE = "on-pairing-code"
 }
 export declare abstract class Messages {
     static sessionAlreadyExist: (sessionId: string) => string;
