@@ -5,9 +5,9 @@
 ### *Multi-Session WhatsApp – jetzt mit echtem Lifecycle-Management*
 ### *QR · Pairing · Pause/Resume · PM2-Ready · Update Notify*
 
-[![Version](https://img.shields.io/badge/Version-1.8.5-ff69b4?style=for-the-badge&logo=npm)](https://www.npmjs.com/package/@neelegirly/wa-api)
-[![Baileys](https://img.shields.io/badge/%40neelegirly%2Fbaileys-2.2.20-9b59b6?style=for-the-badge)](https://www.npmjs.com/package/@neelegirly/baileys)
-[![Libsignal](https://img.shields.io/badge/%40neelegirly%2Flibsignal-1.0.29-f4a261?style=for-the-badge)](https://www.npmjs.com/package/@neelegirly/libsignal)
+[![Version](https://img.shields.io/badge/Version-1.8.6-ff69b4?style=for-the-badge&logo=npm)](https://www.npmjs.com/package/@neelegirly/wa-api)
+[![Baileys](https://img.shields.io/badge/%40neelegirly%2Fbaileys-2.2.22-9b59b6?style=for-the-badge)](https://www.npmjs.com/package/@neelegirly/baileys)
+[![Libsignal](https://img.shields.io/badge/%40neelegirly%2Flibsignal-1.0.31-f4a261?style=for-the-badge)](https://www.npmjs.com/package/@neelegirly/libsignal)
 [![Downloader](https://img.shields.io/badge/%40neelegirly%2Fdownloader-0.1.65-c77dff?style=for-the-badge)](https://www.npmjs.com/package/@neelegirly/downloader)
 [![npm](https://img.shields.io/npm/v/%40neelegirly%2Fwa-api?style=for-the-badge&color=ff69b4&logo=npm)](https://www.npmjs.com/package/@neelegirly/wa-api)
 
@@ -15,7 +15,7 @@
   <img src="https://files.catbox.moe/c5adb6.jpeg" width="780" alt="@neelegirly/wa-api Hero" />
 </p>
 
-<p align="center"><sub>2026 Glow-Up Edition · Session Registry · <code>_neelegirly</code> · abgestimmt auf <strong>@neelegirly/baileys 2.2.20</strong></sub></p>
+<p align="center"><sub>2026 Glow-Up Edition · Session Registry · <code>_neelegirly</code> · abgestimmt auf <strong>@neelegirly/baileys 2.2.22</strong></sub></p>
 
 [**Installation**](#-installation) · [**Quickstart**](#-quickstart) · [**Lifecycle**](#-session-management) · [**Storage**](#-storage--credential-migration) · [**API**](#-api-overview) · [**Release Notes**](#-release-notes-185)
 
@@ -40,10 +40,11 @@
 
 ---
 
-## 🆕 Was sich in `v1.8.5` geändert hat
+## 🆕 Was sich in `v1.8.6` geändert hat
 
-- ✅ Stack auf `@neelegirly/baileys 2.2.20` und `@neelegirly/libsignal 1.0.29` aktualisiert
+- ✅ Stack auf `@neelegirly/baileys 2.2.22` und `@neelegirly/libsignal 1.0.31` aktualisiert
 - ✅ Baileys übernimmt die aktuellen WA-API-/USync-Patches plus libsignal-TypeScript-Definitionen
+- ✅ Link-Preview-Redirect-Retry und serverseitige MEX-Notifications im Baileys-Unterbau enthalten
 - ✅ WhatsApp-Web-, Private-Chat- und Session-Lifecycle-Code bleibt unverändert zur stabilen `1.8.4`-Basis
 
 ## 🆕 Was sich in `v1.8.4` geändert hat
@@ -73,19 +74,19 @@
 ### npm
 
 ```bash
-npm install @neelegirly/wa-api@1.8.5 @neelegirly/baileys@2.2.20 @neelegirly/libsignal@1.0.29 @neelegirly/downloader@0.1.65 --save-exact
+npm install @neelegirly/wa-api@1.8.6 @neelegirly/baileys@2.2.22 @neelegirly/libsignal@1.0.31 @neelegirly/downloader@0.1.65 --save-exact
 ```
 
 ### yarn
 
 ```bash
-yarn add @neelegirly/wa-api@1.8.5 @neelegirly/baileys@2.2.20 @neelegirly/libsignal@1.0.29 @neelegirly/downloader@0.1.65 --exact
+yarn add @neelegirly/wa-api@1.8.6 @neelegirly/baileys@2.2.22 @neelegirly/libsignal@1.0.31 @neelegirly/downloader@0.1.65 --exact
 ```
 
 ### pnpm
 
 ```bash
-pnpm add @neelegirly/wa-api@1.8.5 @neelegirly/baileys@2.2.20 @neelegirly/libsignal@1.0.29 @neelegirly/downloader@0.1.65 --save-exact
+pnpm add @neelegirly/wa-api@1.8.6 @neelegirly/baileys@2.2.22 @neelegirly/libsignal@1.0.31 @neelegirly/downloader@0.1.65 --save-exact
 ```
 
 ### Import
@@ -98,7 +99,7 @@ const waApi = require('@neelegirly/wa-api')
 import * as waApi from '@neelegirly/wa-api'
 ```
 
-> Der empfohlene Stack für diesen Release ist: `1.8.5 / 2.2.20 / 1.0.29 / 0.1.65`.
+> Der empfohlene Stack für diesen Release ist: `1.8.6 / 2.2.22 / 1.0.31 / 0.1.65`.
 
 ---
 
@@ -306,10 +307,11 @@ console.log(waApi.getUpdateStatus())
 
 ---
 
-## 📝 Release Notes `1.8.5`
+## 📝 Release Notes `1.8.6`
 
-- Stack-Dependency auf `@neelegirly/baileys 2.2.20` angehoben
-- Damit wird `@neelegirly/libsignal 1.0.29` mit WhiskeySockets-TypeScript-Definitionen und ProtocolAddress-Typen genutzt
+- Stack-Dependency auf `@neelegirly/baileys 2.2.22` angehoben
+- Damit wird `@neelegirly/libsignal 1.0.31` mit WhiskeySockets-TypeScript-Definitionen und ProtocolAddress-Typen genutzt
+- Baileys-Unterbau enthält den Link-Preview-Retry-Fix und serverseitige MEX-Updates
 - Keine Änderungen am stabilen WhatsApp-Web-/Private-Chat-/Lifecycle-Verhalten
 
 ## 📝 Frühere Release Notes `1.8.4`

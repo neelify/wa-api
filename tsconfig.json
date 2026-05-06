@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": false,
+    "esModuleInterop": true,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "noEmit": true,
+    "skipLibCheck": true,
+    "target": "es2020",
+    "types": ["node"]
+  },
+  "include": ["dist/**/*.js", "dist/**/*.d.ts"],
+  "exclude": ["node_modules"]
+}
